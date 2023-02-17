@@ -22,8 +22,8 @@ For detailed instructions, please clink on this link [Google Cloud SDK](https://
 
 ```bash
 
-git clone git@github.com:prividentity/CryptoNets.git
-cd age_google_cloud_function
+git clone git@github.com:prividentity/gcp-estimate-age-cloud-function.git
+cd gcp-estimate-age-cloud-function
 
 ```
 
