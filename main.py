@@ -3,6 +3,7 @@ import json
 import re
 import traceback
 from io import BytesIO
+import os 
 
 import functions_framework
 import numpy as np
@@ -13,6 +14,12 @@ from cryptonets_python_sdk.settings.cacheType import CacheType
 from cryptonets_python_sdk.factor import FaceFactor
 from cryptonets_python_sdk.settings.loggingLevel import LoggingLevel
 
+class SessionStatus:
+    AGE_UNKNOWN = "AGE_UNKNOWN"
+    BELOW_THRESHOLD = "AGE_BELOW_THRESHOLD"
+    ABOVE_THRESHOLD = "AGE_ABOVE_THRESHOLD"
+
+AGE_THRESHOLD=os.environ.get('THRESHOLD',22)  
 
 @functions_framework.http
 def estimate_age(request):
@@ -91,9 +98,17 @@ def estimate_age(request):
         response = []
 
         for index, face in enumerate(age_handle.face_objects):
+            if face.age is None:
+                    session_status=SessionStatus.AGE_UNKNOWN
+            elif face.age < AGE_THRESHOLD:
+                    session_status=SessionStatus.BELOW_THRESHOLD
+            else:
+                       session_status=SessionStatus.ABOVE_THRESHOLD
+
             face = {"return_code": face.return_code, "message": face.message, "age": face.age,
                     "BBox_top_left": face.bounding_box.top_left_coordinate.__str__(),
-                    "BBox_bottom_right": face.bounding_box.bottom_right_coordinate.__str__()}
+                    "BBox_bottom_right": face.bounding_box.bottom_right_coordinate.__str__(),
+                    "session_status":session_status }
             response.append(face)
 
         if not len(response):
