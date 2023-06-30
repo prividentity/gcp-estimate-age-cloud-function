@@ -98,7 +98,7 @@ def estimate_age(request):
         response = []
 
         for index, face in enumerate(age_handle.face_objects):
-            if face.age is None:
+            if face.age is None or face.age == -1:
                     session_status=SessionStatus.AGE_UNKNOWN
             elif face.age < AGE_THRESHOLD:
                     session_status=SessionStatus.BELOW_THRESHOLD
