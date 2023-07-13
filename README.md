@@ -1,5 +1,5 @@
 
-# CryptoNets AgeEstimate Google cloud function
+# Private ID estimate_age Google Cloud Function
 
 The estimate_age method accepts a frontal base64 facial image and apiKey, checks the image to determine if a valid facial biometric that conforms to the specified restriction(s) are present in the image, and returns the age estimate [0-100] plus bounding box, or useful error code(s).
 
