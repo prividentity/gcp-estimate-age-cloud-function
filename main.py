@@ -89,18 +89,7 @@ def estimate_age(request):
                                 "message ": "Invalid Apikey",
                                 "faces": []}), 200, headers)
         
-        config_object = ConfigObject(config_param={
-            PARAMETERS.ESTIMATE_AGE_RESERVATION_CALLS: 1,
-            PARAMETERS.THRESHOLD_HIGH_VERTICAL_ENROLL: -0.1,
-            PARAMETERS.THRESHOLD_DOWN_VERTICAL_ENROLL: 0.1,
-            PARAMETERS.THRESHOLD_PROFILE_ENROLL: 0.55,
-            PARAMETERS.THRESHOLD_USER_TOO_CLOSE: 0.8,
-            PARAMETERS.THRESHOLD_USER_TOO_FAR: 0.3,
-            PARAMETERS.THRESHOLD_VERTICAL_ENROLL: 0.3,
-            PARAMETERS.AUTO_ZOOM_DISABLED: True
-        })
-        
-        face_factor = FaceFactor(server_url=server_url, api_key=api_key,logging_level=LoggingLevel.off, config=config_object, cache_type=CacheType.OFF)
+        face_factor = FaceFactor(logging_level=LoggingLevel.off)
         age_handle = face_factor.estimate_age(image_data=image_data)
         response = []
 
