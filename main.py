@@ -10,7 +10,6 @@ import numpy as np
 import requests
 from PIL import Image
 from cryptonets_python_sdk.settings.configuration import ConfigObject, PARAMETERS
-from cryptonets_python_sdk.settings.cacheType import CacheType
 from cryptonets_python_sdk.factor import FaceFactor
 from cryptonets_python_sdk.settings.loggingLevel import LoggingLevel
 
@@ -19,7 +18,7 @@ class SessionStatus:
     BELOW_THRESHOLD = "AGE_BELOW_THRESHOLD"
     ABOVE_THRESHOLD = "AGE_ABOVE_THRESHOLD"
 
-AGE_THRESHOLD=os.environ.get('THRESHOLD',22)  
+
 
 @functions_framework.http
 def estimate_age(request):
@@ -41,6 +40,7 @@ def estimate_age(request):
         'Access-Control-Allow-Origin': '*'
     }
     try:
+        AGE_THRESHOLD= request_json.get('AGE_THRESHOLD', 22)
         if request.get_json(silent=True):
             request_json = request.get_json(silent=True)
         elif request.data:
@@ -89,8 +89,68 @@ def estimate_age(request):
                                 "message ": "Invalid Apikey",
                                 "faces": []}), 200, headers)
         
+        # Mapping of API request keys to their corresponding PARAMETERS keys
+        parameter_mapping = {
+            "INPUT_IMAGE_FORMAT": PARAMETERS.INPUT_IMAGE_FORMAT,
+            "CONTEXT_STRING": PARAMETERS.CONTEXT_STRING,
+            "INPUT_TYPE": PARAMETERS.INPUT_TYPE,
+            "BLUR_THRESHOLD_ENROLL_PRED": PARAMETERS.BLUR_THRESHOLD_ENROLL_PRED,
+            "CONF_SCORE_THR_ENROLL": PARAMETERS.CONF_SCORE_THR_ENROLL,
+            "THRESHOLD_PROFILE_ENROLL": PARAMETERS.THRESHOLD_PROFILE_ENROLL,
+            "THRESHOLD_HIGH_VERTICAL_ENROLL": PARAMETERS.THRESHOLD_HIGH_VERTICAL_ENROLL,
+            "THRESHOLD_DOWN_VERTICAL_ENROLL": PARAMETERS.THRESHOLD_DOWN_VERTICAL_ENROLL,
+            "THRESHOLD_USER_RIGHT": PARAMETERS.THRESHOLD_USER_RIGHT,
+            "THRESHOLD_USER_LEFT": PARAMETERS.THRESHOLD_USER_LEFT,
+            "THRESHOLD_USER_TOO_FAR": PARAMETERS.THRESHOLD_USER_TOO_FAR,
+            "THRESHOLD_USER_TOO_CLOSE": PARAMETERS.THRESHOLD_USER_TOO_CLOSE,
+            "SPOOF_FILTER_THRESHOLD": PARAMETERS.SPOOF_FILTER_THRESHOLD,
+            "ANGLE_ROTATION_LEFT_THRESHOLD": PARAMETERS.ANGLE_ROTATION_LEFT_THRESHOLD,
+            "ANGLE_ROTATION_RIGHT_THRESHOLD": PARAMETERS.ANGLE_ROTATION_RIGHT_THRESHOLD,
+            "SKIP_ANTISPOOF": PARAMETERS.SKIP_ANTISPOOF,
+            "SINGLE_FACE_AGE_RESUL": PARAMETERS.SINGLE_FACE_AGE_RESUL,
+            "FACE_TOO_BRIGHT": PARAMETERS.FACE_TOO_BRIGHT,
+            "FACE_TOO_DARK": PARAMETERS.FACE_TOO_DARK
+        }
+
+        config_param = {}
+        for api_key, param_key in parameter_mapping.items():
+            if api_key in request_json:
+                config_param[param_key] = request_json[api_key]
+
+
         face_factor = FaceFactor(logging_level=LoggingLevel.off)
-        age_handle = face_factor.estimate_age(image_data=image_data)
+        if request_json.get('relaxed_params', None):
+            config = ConfigObject(config_param={
+
+            PARAMETERS.INPUT_IMAGE_FORMAT: config_param.get("INPUT_IMAGE_FORMAT", "rgb"),
+            PARAMETERS.CONTEXT_STRING: config_param.get("CONTEXT_STRING", "enroll"),
+            PARAMETERS.INPUT_TYPE: config_param.get("INPUT_TYPE", "face"),
+            PARAMETERS.BLUR_THRESHOLD_ENROLL_PRED: config_param.get("BLUR_THRESHOLD_ENROLL_PRED", 8),
+            PARAMETERS.CONF_SCORE_THR_ENROLL: config_param.get("CONF_SCORE_THR_ENROLL", 0.5),
+            PARAMETERS.THRESHOLD_PROFILE_ENROLL: config_param.get("THRESHOLD_PROFILE_ENROLL", 0.8),
+            PARAMETERS.THRESHOLD_HIGH_VERTICAL_ENROLL: config_param.get("THRESHOLD_HIGH_VERTICAL_ENROLL", -0.3),
+            PARAMETERS.THRESHOLD_DOWN_VERTICAL_ENROLL: config_param.get("THRESHOLD_DOWN_VERTICAL_ENROLL", 0.3),
+            PARAMETERS.THRESHOLD_USER_RIGHT: config_param.get("THRESHOLD_USER_RIGHT", 0.01),
+            PARAMETERS.THRESHOLD_USER_LEFT: config_param.get("THRESHOLD_USER_LEFT", 0.99),
+            PARAMETERS.THRESHOLD_USER_TOO_FAR: config_param.get("THRESHOLD_USER_TOO_FAR", 0.1),
+            PARAMETERS.THRESHOLD_USER_TOO_CLOSE: config_param.get("THRESHOLD_USER_TOO_CLOSE", 1),
+            PARAMETERS.SPOOF_FILTER_THRESHOLD: config_param.get("SPOOF_FILTER_THRESHOLD", 0.699999988079071),
+            PARAMETERS.ANGLE_ROTATION_LEFT_THRESHOLD: config_param.get("ANGLE_ROTATION_LEFT_THRESHOLD", 40.0),
+            PARAMETERS.ANGLE_ROTATION_RIGHT_THRESHOLD: config_param.get("ANGLE_ROTATION_RIGHT_THRESHOLD", 40.0),
+            PARAMETERS.SKIP_ANTISPOOF: config_param.get("SKIP_ANTISPOOF", True),
+            PARAMETERS.SINGLE_FACE_AGE_RESUL: config_param.get("SINGLE_FACE_AGE_RESUL", False),
+            PARAMETERS.FACE_TOO_BRIGHT: config_param.get("FACE_TOO_BRIGHT", 0.85),
+            PARAMETERS.FACE_TOO_DARK: config_param.get("FACE_TOO_DARK", 0.1)
+
+            })
+            age_handle = face_factor.estimate_age(image_data=image_data,config=config)
+        
+        elif config_param:  
+            config = ConfigObject(config_param=config_param)
+            age_handle = face_factor.estimate_age(image_data=image_data, config=config)
+        else:
+            age_handle = face_factor.estimate_age(image_data=image_data)
+            
         response = []
 
         for index, face in enumerate(age_handle.face_objects):
